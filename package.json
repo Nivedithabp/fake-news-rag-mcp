@@ -1,0 +1,27 @@
+{
+  "name": "fake-news-rag-mcp",
+  "version": "1.0.0",
+  "description": "Fake vs Real News RAG application with MCP server and Next.js frontend",
+  "private": true,
+  "workspaces": [
+    "mcp-server",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:mcp\" \"npm run dev:frontend\"",
+    "dev:mcp": "cd mcp-server && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "npm run build:mcp && npm run build:frontend",
+    "build:mcp": "cd mcp-server && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "test": "npm run test:mcp && npm run test:frontend",
+    "test:mcp": "cd mcp-server && npm test",
+    "test:frontend": "cd frontend && npm test",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

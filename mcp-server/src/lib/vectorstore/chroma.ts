@@ -1,0 +1,131 @@
+import { ChromaApi, ChromaClient } from 'chromadb';
+
+export interface VectorPoint {
+  id: string;
+  vector: number[];
+  metadata: Record<string, any>;
+}
+
+export interface VectorStore {
+  createCollectionIfNotExists(collectionName: string): Promise<void>;
+  upsertPoints(points: VectorPoint[]): Promise<void>;
+  query(vector: number[], topK: number): Promise<VectorPoint[]>;
+  clearCollection(collectionName: string): Promise<void>;
+  getCollectionStats(collectionName: string): Promise<{ count: number }>;
+}
+
+export class ChromaVectorStore implements VectorStore {
+  private client: ChromaClient;
+  private collectionName: string;
+
+  constructor(host: string = 'localhost', port: number = 8000) {
+    this.client = new ChromaClient({
+      path: `http://${host}:${port}`
+    });
+    this.collectionName = 'fake-news-rag';
+  }
+
+  async createCollectionIfNotExists(collectionName: string): Promise<void> {
+    try {
+      await this.client.getCollection({ name: collectionName });
+      console.log(`Collection '${collectionName}' already exists`);
+    } catch (error) {
+      console.log(`Creating collection '${collectionName}'...`);
+      await this.client.createCollection({
+        name: collectionName,
+        metadata: {
+          description: 'Fake vs Real News RAG collection'
+        }
+      });
+      console.log(`Collection '${collectionName}' created successfully`);
+    }
+  }
+
+  async upsertPoints(points: VectorPoint[]): Promise<void> {
+    if (points.length === 0) return;
+
+    try {
+      const collection = await this.client.getCollection({ name: this.collectionName });
+      
+      const ids = points.map(p => p.id);
+      const vectors = points.map(p => p.vector);
+      const metadatas = points.map(p => p.metadata);
+      const documents = points.map(p => p.metadata.text || '');
+
+      await collection.add({
+        ids,
+        embeddings: vectors,
+        metadatas,
+        documents
+      });
+
+      console.log(`Upserted ${points.length} points to Chroma`);
+    } catch (error) {
+      console.error('Chroma upsert error:', error);
+      throw new Error(`Failed to upsert points to Chroma: ${error}`);
+    }
+  }
+
+  async query(vector: number[], topK: number): Promise<VectorPoint[]> {
+    try {
+      const collection = await this.client.getCollection({ name: this.collectionName });
+      
+      const results = await collection.query({
+        queryEmbeddings: [vector],
+        nResults: topK,
+        include: ['metadatas', 'documents', 'distances']
+      });
+
+      if (!results.metadatas || !results.documents || !results.distances) {
+        return [];
+      }
+
+      const points: VectorPoint[] = [];
+      const metadatas = results.metadatas[0] || [];
+      const documents = results.documents[0] || [];
+      const distances = results.distances[0] || [];
+
+      for (let i = 0; i < metadatas.length; i++) {
+        const metadata = metadatas[i] as Record<string, any>;
+        const document = documents[i] as string;
+        const distance = distances[i] as number;
+
+        points.push({
+          id: metadata.id || `unknown_${i}`,
+          vector: vector, // Chroma doesn't return the actual vector
+          metadata: {
+            ...metadata,
+            text: document,
+            score: 1 - distance // Convert distance to similarity score
+          }
+        });
+      }
+
+      return points;
+    } catch (error) {
+      console.error('Chroma query error:', error);
+      throw new Error(`Failed to query Chroma: ${error}`);
+    }
+  }
+
+  async clearCollection(collectionName: string): Promise<void> {
+    try {
+      await this.client.deleteCollection({ name: collectionName });
+      console.log(`Cleared collection '${collectionName}'`);
+    } catch (error) {
+      console.error('Chroma clear error:', error);
+      throw new Error(`Failed to clear collection: ${error}`);
+    }
+  }
+
+  async getCollectionStats(collectionName: string): Promise<{ count: number }> {
+    try {
+      const collection = await this.client.getCollection({ name: collectionName });
+      const count = await collection.count();
+      return { count };
+    } catch (error) {
+      console.error('Chroma stats error:', error);
+      return { count: 0 };
+    }
+  }
+}

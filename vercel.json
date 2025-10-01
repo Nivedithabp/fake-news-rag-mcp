@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/mcp-proxy/(.*)",
+      "dest": "/api/mcp-proxy"
+    }
+  ],
+  "env": {
+    "VECTOR_DB_PROVIDER": "pinecone"
+  }
+}

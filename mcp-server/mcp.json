@@ -1,0 +1,57 @@
+{
+  "name": "fake-news-rag",
+  "version": "0.1.0",
+  "description": "MCP server: RAG over Fake vs Real News dataset",
+  "url": "https://your-mcp-host.example.com/mcp",
+  "tools": [
+    {
+      "name": "mcp.rag.query",
+      "description": "Run a RAG query against the Fake vs Real News index",
+      "params": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The question or query to search for"
+          },
+          "topK": {
+            "type": "integer",
+            "description": "Number of top results to return (default: 4)",
+            "default": 4
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "mcp.index.status",
+      "description": "Get status and statistics of the news index",
+      "params": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "mcp.index.ingest",
+      "description": "Trigger re-ingestion of the news dataset",
+      "params": {
+        "type": "object",
+        "properties": {
+          "force": {
+            "type": "boolean",
+            "description": "Force re-ingestion even if index exists",
+            "default": false
+          }
+        }
+      }
+    },
+    {
+      "name": "mcp.index.clear",
+      "description": "Clear the news index (admin only)",
+      "params": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}
