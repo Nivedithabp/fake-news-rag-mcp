@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Fake vs Real News RAG Application
 
 A complete RAG (Retrieval-Augmented Generation) application that uses the Kaggle "Fake and Real News Dataset" to provide AI-powered fact-checking and news analysis through a Model Context Protocol (MCP) server and Next.js frontend.
@@ -55,8 +54,8 @@ This application uses **completely free** AI models:
 
 - Node.js 18+ and npm
 - Docker and Docker Compose
-- Kaggle account and API credentials
-- **No API keys required for basic usage!** (Uses free Hugging Face models)
+- Kaggle account and API credentials (see [KAGGLE_SETUP.md](KAGGLE_SETUP.md) for detailed setup)
+- **No AI API keys required for basic usage!** (Uses free Hugging Face models)
 
 ### 1. Clone and Setup
 
@@ -347,6 +346,3 @@ For issues and questions:
 ---
 
 **Happy fact-checking! 🕵️‍♀️📰**
-=======
-# fake-news-rag-mcp
->>>>>>> 23110d45540d4c1dbfb06b8219997acde80ebf40

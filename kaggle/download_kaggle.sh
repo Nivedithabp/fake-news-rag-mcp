@@ -15,13 +15,28 @@ if ! command -v kaggle &> /dev/null; then
 fi
 
 # Check if kaggle credentials are configured
-if [ ! -f ~/.kaggle/kaggle.json ]; then
-    echo "Error: Kaggle credentials not found. Please configure them:"
+if [ ! -f ~/.kaggle/kaggle.json ] && [ -z "$KAGGLE_USERNAME" ] && [ -z "$KAGGLE_KEY" ]; then
+    echo "❌ Error: Kaggle credentials not found!"
+    echo ""
+    echo "Please set up Kaggle API authentication:"
     echo "1. Go to https://www.kaggle.com/account"
     echo "2. Create API token and download kaggle.json"
     echo "3. Place it in ~/.kaggle/kaggle.json"
     echo "4. Set permissions: chmod 600 ~/.kaggle/kaggle.json"
+    echo ""
+    echo "📖 For detailed setup instructions, see KAGGLE_SETUP.md"
+    echo ""
+    echo "Alternative: Use environment variables:"
+    echo "export KAGGLE_USERNAME=your_username"
+    echo "export KAGGLE_KEY=your_api_key"
     exit 1
+fi
+
+# Use environment variables if kaggle.json is not available
+if [ ! -f ~/.kaggle/kaggle.json ] && [ -n "$KAGGLE_USERNAME" ] && [ -n "$KAGGLE_KEY" ]; then
+    echo "Using environment variables for Kaggle authentication"
+    export KAGGLE_USERNAME
+    export KAGGLE_KEY
 fi
 
 # Create output directory
