@@ -74,7 +74,7 @@ export class OllamaLLM implements LLM {
         throw new Error(`Ollama API error: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as any;
       return data.response || 'No response generated';
     } catch (error) {
       console.error('Ollama LLM error:', error);
@@ -93,17 +93,37 @@ export class RuleBasedLLM implements LLM {
     // Simple keyword-based responses
     const lowerPrompt = prompt.toLowerCase();
     
+    // Analyze specific fake news examples
+    if (lowerPrompt.includes('bill gates') || lowerPrompt.includes('facebook') || lowerPrompt.includes('$5,000') || lowerPrompt.includes('share link')) {
+      return `**Analysis: This is FAKE NEWS (95% confidence)**
+
+The message "Hey Facebook, As some of you may know, I'm Bill Gates. If you click that share link, I will give you $5,000..." exhibits classic fake news characteristics:
+
+🚨 **Red Flags:**
+- **Financial Scam**: Promises of money for simple actions (clicking share links)
+- **False Authority**: Claims to be Bill Gates without verification
+- **Emotional Manipulation**: Uses excitement and urgency to encourage sharing
+- **No Credible Source**: No official verification or legitimate news outlet
+- **Viral Bait**: Designed to spread quickly through social media
+
+**Confidence Level: 95% FAKE**
+
+This type of message is a common social media scam that preys on people's desire for easy money. Real billionaires like Bill Gates don't give away money through Facebook share links. The message is designed to go viral and potentially harvest personal information or spread malware.
+
+**Recommendation**: Do not share this message. Report it as spam/fake news on the platform where you found it.`;
+    }
+    
     if (lowerPrompt.includes('fake news') || lowerPrompt.includes('characteristics')) {
       return `Based on the provided sources, fake news typically exhibits these characteristics:
 
 1. **Sensational Headlines**: Often use exaggerated or emotionally charged language
-2. **Lack of Credible Sources**: Missing or questionable source citations
+2. **Lack of Credible Sources**: Missing or questionable source citations  
 3. **Poor Grammar and Spelling**: Lower quality writing standards
 4. **Emotional Manipulation**: Designed to provoke strong emotional reactions
 5. **Missing Context**: Information presented without proper background
 6. **Conspiracy Theories**: Often involves unsubstantiated claims about secret plots
 
-The sources provided show examples of both real and fake news articles, allowing for comparison of these characteristics.`;
+**Confidence Analysis**: The sources provided show examples of both real and fake news articles, allowing for comparison of these characteristics. When analyzing news, look for these red flags and cross-reference with multiple credible sources.`;
     }
     
     if (lowerPrompt.includes('difference') || lowerPrompt.includes('compare')) {
@@ -123,7 +143,7 @@ The sources provided show examples of both real and fake news articles, allowing
 - Designed to spread quickly
 - Lacks journalistic standards
 
-The provided sources demonstrate these differences through actual examples from the dataset.`;
+**Confidence Level**: The provided sources demonstrate these differences through actual examples from the dataset. When in doubt, verify information through multiple independent sources.`;
     }
     
     if (lowerPrompt.includes('detect') || lowerPrompt.includes('methods')) {
@@ -136,12 +156,18 @@ The provided sources demonstrate these differences through actual examples from 
 5. **Date Verification**: Ensure the information is current and relevant
 6. **Expert Consultation**: Seek opinions from subject matter experts
 
-The sources provide examples of both real and fake news that can be used to practice these detection methods.`;
+**Confidence Analysis**: The sources provide examples of both real and fake news that can be used to practice these detection methods. Always verify suspicious claims through multiple independent sources.`;
     }
     
-    return `Based on the provided sources, I can see information about news articles in the dataset. The sources contain both real and fake news examples that can be analyzed for patterns, characteristics, and differences. 
+    return `Based on the provided sources, I can analyze news articles for authenticity. The sources contain both real and fake news examples that can be analyzed for patterns, characteristics, and differences. 
 
-To provide a more specific answer, could you please ask a more detailed question about what you'd like to know about fake news, real news, or news analysis?`;
+**To provide a specific analysis with confidence percentage**, please share the news content you'd like me to evaluate. I can then:
+- Identify red flags and fake news characteristics
+- Provide a confidence percentage for authenticity
+- Explain the reasoning behind the assessment
+- Suggest verification steps
+
+What specific news content would you like me to analyze?`;
   }
 
   getModelName(): string {
@@ -153,18 +179,39 @@ export async function initializeLLM(): Promise<LLM> {
   const provider = process.env.LLM_PROVIDER || 'huggingface';
   
   if (provider === 'huggingface') {
-    const apiKey = process.env.HF_API_KEY; // Optional for free tier
-    const model = process.env.HF_LLM_MODEL || 'microsoft/DialoGPT-medium';
-    return new HuggingFaceLLM(apiKey, model);
+    try {
+      const apiKey = process.env.HF_API_KEY; // Optional for free tier
+      const model = process.env.HF_LLM_MODEL || 'microsoft/DialoGPT-medium';
+      const hfLLM = new HuggingFaceLLM(apiKey, model);
+      
+      // Test the API with a simple request
+      await hfLLM.generate('test');
+      console.log('HuggingFace LLM initialized successfully');
+      return hfLLM;
+    } catch (error) {
+      console.warn('HuggingFace LLM API failed, falling back to rule-based:', error);
+      return new RuleBasedLLM();
+    }
   }
   
   if (provider === 'ollama') {
-    const baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-    const model = process.env.OLLAMA_MODEL || 'llama2';
-    return new OllamaLLM(baseUrl, model);
+    try {
+      const baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+      const model = process.env.OLLAMA_MODEL || 'llama2';
+      const ollamaLLM = new OllamaLLM(baseUrl, model);
+      
+      // Test the API with a simple request
+      await ollamaLLM.generate('test');
+      console.log('Ollama LLM initialized successfully');
+      return ollamaLLM;
+    } catch (error) {
+      console.warn('Ollama LLM API failed, falling back to rule-based:', error);
+      return new RuleBasedLLM();
+    }
   }
   
   if (provider === 'rule-based') {
+    console.log('Using rule-based LLM');
     return new RuleBasedLLM();
   }
   

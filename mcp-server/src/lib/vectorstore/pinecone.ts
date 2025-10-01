@@ -31,7 +31,7 @@ export class PineconeVectorStore implements VectorStore {
     try {
       // Check if index exists
       const indexes = await this.client.listIndexes();
-      const indexExists = indexes.indexes?.some(idx => idx.name === collectionName);
+      const indexExists = indexes?.some((idx: any) => idx.name === collectionName);
       
       if (indexExists) {
         console.log(`Index '${collectionName}' already exists`);
@@ -45,13 +45,7 @@ export class PineconeVectorStore implements VectorStore {
       await this.client.createIndex({
         name: collectionName,
         dimension: 384, // HuggingFace all-MiniLM-L6-v2 dimensions
-        metric: 'cosine',
-        spec: {
-          serverless: {
-            cloud: 'aws',
-            region: 'us-east-1'
-          }
-        }
+        metric: 'cosine'
       });
 
       // Wait for index to be ready

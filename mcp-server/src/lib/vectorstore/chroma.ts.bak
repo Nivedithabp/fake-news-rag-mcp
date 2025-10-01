@@ -1,4 +1,4 @@
-import { ChromaApi, ChromaClient } from 'chromadb';
+import { ChromaClient } from 'chromadb';
 
 export interface VectorPoint {
   id: string;
@@ -72,8 +72,7 @@ export class ChromaVectorStore implements VectorStore {
       
       const results = await collection.query({
         queryEmbeddings: [vector],
-        nResults: topK,
-        include: ['metadatas', 'documents', 'distances']
+        nResults: topK
       });
 
       if (!results.metadatas || !results.documents || !results.distances) {

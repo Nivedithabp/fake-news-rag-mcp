@@ -43,15 +43,17 @@ conda install -c conda-forge kaggle
 #### Option A: Using kaggle.json file (Recommended)
 
 1. Create the kaggle directory:
+
    ```bash
    mkdir -p ~/.kaggle
    ```
 
 2. Move the downloaded `kaggle.json` file:
+
    ```bash
    # On macOS/Linux
    mv ~/Downloads/kaggle.json ~/.kaggle/
-   
+
    # On Windows
    move %USERPROFILE%\Downloads\kaggle.json %USERPROFILE%\.kaggle\
    ```
@@ -86,11 +88,13 @@ kaggle datasets download -d clmentbisaillon/fake-and-real-news-dataset -p ./test
 ### Common Issues
 
 1. **"403 Forbidden" Error**
+
    - Make sure you've accepted the dataset license
    - Verify your API token is correct
    - Check if the dataset is public and accessible
 
 2. **"File not found" Error**
+
    - Ensure `kaggle.json` is in the correct location
    - Check file permissions (should be 600 on Linux/macOS)
    - Verify the file contains valid JSON
