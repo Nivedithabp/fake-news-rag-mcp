@@ -1,3 +1,6 @@
+
+<img width="1019" height="828" alt="Screenshot 2025-09-30 at 10 04 34 PM" src="https://github.com/user-attachments/assets/b819a49b-bdbe-43e0-8419-f1ec8ab31bcb" />
+
 # Fake vs Real News RAG Application
 
 A complete RAG (Retrieval-Augmented Generation) application that uses the Kaggle "Fake and Real News Dataset" to provide AI-powered fact-checking and news analysis through a Model Context Protocol (MCP) server and Next.js frontend.
