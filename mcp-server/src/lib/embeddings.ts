@@ -1,4 +1,3 @@
-import OpenAI from 'openai';
 import { HfInference } from '@huggingface/inference';
 
 export interface Embeddings {
@@ -6,41 +5,11 @@ export interface Embeddings {
   getDimensions(): number;
 }
 
-export class OpenAIEmbeddings implements Embeddings {
-  private client: OpenAI;
-  private model: string;
-
-  constructor(apiKey: string, model: string = 'text-embedding-3-small') {
-    this.client = new OpenAI({ apiKey });
-    this.model = model;
-  }
-
-  async embed(texts: string[]): Promise<number[][]> {
-    try {
-      const response = await this.client.embeddings.create({
-        model: this.model,
-        input: texts,
-        encoding_format: 'float'
-      });
-
-      return response.data.map(item => item.embedding);
-    } catch (error) {
-      console.error('OpenAI embedding error:', error);
-      throw new Error(`Failed to generate embeddings: ${error}`);
-    }
-  }
-
-  getDimensions(): number {
-    // text-embedding-3-small has 1536 dimensions
-    return 1536;
-  }
-}
-
 export class HuggingFaceEmbeddings implements Embeddings {
   private client: HfInference;
   private model: string;
 
-  constructor(apiKey: string, model: string = 'sentence-transformers/all-mpnet-base-v2') {
+  constructor(apiKey?: string, model: string = 'sentence-transformers/all-MiniLM-L6-v2') {
     this.client = new HfInference(apiKey);
     this.model = model;
   }
@@ -61,33 +30,55 @@ export class HuggingFaceEmbeddings implements Embeddings {
   }
 
   getDimensions(): number {
-    // all-mpnet-base-v2 has 768 dimensions
-    return 768;
+    // all-MiniLM-L6-v2 has 384 dimensions
+    return 384;
+  }
+}
+
+// Local embeddings using transformers.js (completely free)
+export class LocalEmbeddings implements Embeddings {
+  private model: string;
+
+  constructor(model: string = 'Xenova/all-MiniLM-L6-v2') {
+    this.model = model;
+  }
+
+  async embed(texts: string[]): Promise<number[][]> {
+    try {
+      // This would require transformers.js to be installed
+      // For now, we'll use a simple fallback
+      console.warn('Local embeddings not fully implemented. Using HuggingFace instead.');
+      
+      // Fallback to HuggingFace without API key
+      const hfEmbeddings = new HuggingFaceEmbeddings(undefined, 'sentence-transformers/all-MiniLM-L6-v2');
+      return await hfEmbeddings.embed(texts);
+    } catch (error) {
+      console.error('Local embedding error:', error);
+      throw new Error(`Failed to generate local embeddings: ${error}`);
+    }
+  }
+
+  getDimensions(): number {
+    return 384;
   }
 }
 
 export async function initializeEmbeddings(): Promise<Embeddings> {
-  const provider = process.env.EMBEDDING_PROVIDER || 'openai';
-  
-  if (provider === 'openai') {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error('OPENAI_API_KEY environment variable is required');
-    }
-    
-    const model = process.env.OPENAI_EMBED_MODEL || 'text-embedding-3-small';
-    return new OpenAIEmbeddings(apiKey, model);
-  }
+  const provider = process.env.EMBEDDING_PROVIDER || 'huggingface';
   
   if (provider === 'huggingface') {
-    const apiKey = process.env.HF_API_KEY;
-    if (!apiKey) {
-      throw new Error('HF_API_KEY environment variable is required');
-    }
-    
-    const model = process.env.HF_EMBED_MODEL || 'sentence-transformers/all-mpnet-base-v2';
+    // HuggingFace is free, API key is optional
+    const apiKey = process.env.HF_API_KEY; // Optional for free tier
+    const model = process.env.HF_EMBED_MODEL || 'sentence-transformers/all-MiniLM-L6-v2';
     return new HuggingFaceEmbeddings(apiKey, model);
   }
   
-  throw new Error(`Unsupported embedding provider: ${provider}`);
+  if (provider === 'local') {
+    const model = process.env.LOCAL_EMBED_MODEL || 'Xenova/all-MiniLM-L6-v2';
+    return new LocalEmbeddings(model);
+  }
+  
+  // Fallback to free HuggingFace
+  console.log('Using free HuggingFace embeddings as fallback');
+  return new HuggingFaceEmbeddings(undefined, 'sentence-transformers/all-MiniLM-L6-v2');
 }

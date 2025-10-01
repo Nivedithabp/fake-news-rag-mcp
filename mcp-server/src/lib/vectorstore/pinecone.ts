@@ -41,10 +41,10 @@ export class PineconeVectorStore implements VectorStore {
 
       console.log(`Creating Pinecone index '${collectionName}'...`);
       
-      // Create index with appropriate dimensions (1536 for OpenAI embeddings)
+      // Create index with appropriate dimensions (384 for HuggingFace embeddings)
       await this.client.createIndex({
         name: collectionName,
-        dimension: 1536, // OpenAI text-embedding-3-small dimensions
+        dimension: 384, // HuggingFace all-MiniLM-L6-v2 dimensions
         metric: 'cosine',
         spec: {
           serverless: {

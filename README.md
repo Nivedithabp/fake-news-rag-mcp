@@ -12,6 +12,7 @@ A complete RAG (Retrieval-Augmented Generation) application that uses the Kaggle
 - **Modern Frontend**: Next.js 14 with Tailwind CSS and responsive design
 - **Docker Support**: Complete containerization with docker-compose
 - **Production Ready**: Vercel deployment configuration and security best practices
+- **🆓 Completely Free**: Uses Hugging Face free models - no API costs!
 
 ## 📁 Project Structure
 
@@ -37,6 +38,17 @@ A complete RAG (Retrieval-Augmented Generation) application that uses the Kaggle
 └── README.md
 ```
 
+## 🆓 Free AI Models
+
+This application uses **completely free** AI models:
+
+- **Embeddings**: Hugging Face `sentence-transformers/all-MiniLM-L6-v2` (384 dimensions)
+- **Text Generation**: Hugging Face `microsoft/DialoGPT-medium` or rule-based fallback
+- **Alternative**: Ollama with local models (llama2, mistral, etc.)
+- **Fallback**: Rule-based responses when no API is available
+
+**No OpenAI API key required!** The application works out of the box with free models.
+
 ## 🛠️ Quick Start
 
 ### Prerequisites
@@ -44,7 +56,7 @@ A complete RAG (Retrieval-Augmented Generation) application that uses the Kaggle
 - Node.js 18+ and npm
 - Docker and Docker Compose
 - Kaggle account and API credentials
-- OpenAI API key
+- **No API keys required for basic usage!** (Uses free Hugging Face models)
 
 ### 1. Clone and Setup
 
@@ -63,8 +75,11 @@ cp .env.example .env
 Edit `.env` with your credentials:
 
 ```env
-# Required
-OPENAI_API_KEY=your_openai_api_key_here
+# Free AI Models (No API keys required!)
+EMBEDDING_PROVIDER=huggingface
+LLM_PROVIDER=huggingface
+
+# Required for dataset download
 KAGGLE_USERNAME=your_kaggle_username
 KAGGLE_KEY=your_kaggle_api_key
 

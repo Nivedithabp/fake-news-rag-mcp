@@ -1,6 +1,6 @@
-import OpenAI from 'openai';
 import { VectorStore, VectorPoint } from './vectorstore';
 import { Embeddings } from './embeddings';
+import { LLM, initializeLLM } from './llm';
 
 export interface RAGResult {
   answer: string;
@@ -17,20 +17,21 @@ export interface RAGResult {
 }
 
 export class RAGAgent {
-  private openai: OpenAI;
-  private model: string;
+  private llm: LLM;
 
   constructor(
     private vectorStore: VectorStore,
     private embeddings: Embeddings
   ) {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error('OPENAI_API_KEY environment variable is required');
+    // Initialize LLM will be called in the first use
+    this.llm = null as any;
+  }
+
+  private async getLLM(): Promise<LLM> {
+    if (!this.llm) {
+      this.llm = await initializeLLM();
     }
-    
-    this.openai = new OpenAI({ apiKey });
-    this.model = process.env.OPENAI_COMPLETION_MODEL || 'gpt-4o-mini';
+    return this.llm;
   }
 
   async answerWithRAG(query: string, topK: number = 4): Promise<RAGResult> {
@@ -59,23 +60,10 @@ export class RAGAgent {
       
       // 5. Call LLM
       console.log('Calling LLM for answer...');
-      const response = await this.openai.chat.completions.create({
-        model: this.model,
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a research assistant that answers questions using only the documents provided below. Always cite sources inline using [1], [2], etc. If you cannot answer from the documents, say "I don\'t know based on the dataset."'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.1,
-        max_tokens: 1000
-      });
-
-      const answer = response.choices[0]?.message?.content || 'No response generated';
+      const llm = await this.getLLM();
+      const systemPrompt = 'You are a research assistant that answers questions using only the documents provided below. Always cite sources inline using [1], [2], etc. If you cannot answer from the documents, say "I don\'t know based on the dataset."';
+      
+      const answer = await llm.generate(prompt, systemPrompt);
       
       // 6. Format sources
       const sources = similarChunks.map((chunk, index) => ({
@@ -91,7 +79,11 @@ export class RAGAgent {
       return {
         answer,
         sources,
-        rawModelResponse: JSON.stringify(response, null, 2)
+        rawModelResponse: JSON.stringify({
+          model: llm.getModelName(),
+          answer: answer,
+          timestamp: new Date().toISOString()
+        }, null, 2)
       };
 
     } catch (error) {
